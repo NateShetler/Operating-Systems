@@ -59,6 +59,9 @@ int parseCommand(char *, struct command_t *);
 void printPrompt();
 void readCommand(char *);
 
+// My Function Prototypes
+void LCommand();
+
 int main(int argc, char *argv[]) {
     int pid;
     int status;
@@ -77,24 +80,80 @@ int main(int argc, char *argv[]) {
 	        either execute it directly or build a new command structure to
 	        execute next
 	    */
-      
-        // This is the 'Q' command that Quits the shell.
-        if (*(command.name) == 'Q')
+
+        if (*(command.name) == 'C') // This is the copy file option
+        {
+            // This will convert the command name to a linux command name
+            command.name = "cp";
+        }
+        else if (*(command.name) == 'D') // This is the delete the desired file option
+        {
+            // This will convert the command name to a linux command name
+            command.name = "rm";
+        }
+        else if (*(command.name) == 'E') // This is the echo command
+        {
+            // This will convert the command name to a linux command name
+            command.name = "echo";
+        }
+         /*
+        else if (*(command.name) == 'L') // This will print out the current directory contents
+        {
+            // THIS NEEDS WORK //
+
+
+            // Skip a line
+            printf("\n");
+
+            // This will convert the command name to a linux command name
+            command.name = "ls -l";
+
+
+        }
+        */
+        else if (*(command.name) == 'M') // This will create the named text file and launch it in a text editor
+        {
+            // This will convert the command name to a linux command name
+            command.name = "nano";
+        }
+        else if (*(command.name) == 'P') // This is the print file text option
+        {
+            // This will convert the command name to a linux command name
+            command.name = "more";
+        } 
+        // THIS NEEDS WORK
+        else if (*(command.name) == 'Q') // This is the 'Q' command that Quits the shell.
         {
             break;
         }
+        else if (*(command.name) == 'W') // This is the clear screen option
+        {
+            // This will convert the command name to a linux command name
+            command.name = "clear";
+        }
+        //----------------------------------------------------------------
+        /*
+        else if (*(command.name) == 'X') // This is the run program command
+        {
+            // DO SOMETHING HERE
+        }
+        */
 
         /* Create a child process to execute the command */
         if ((pid = fork()) == 0) {
            /* Child executing command */
            execvp(command.name, command.argv);
+
+           // If the command isn't valid, let the user know
+           printf("Command not found. Please only enter valid commands.\n");
+
         }
         /* Wait for the child to terminate */
         wait(&status); /* EDIT THIS LINE */
    }
 
     /* Shell termination */
-    printf("\n\n shell: Terminating successfully\n");
+    printf("\n\n Shell: Terminating Successfully\n");
     return 0;
 }
 
