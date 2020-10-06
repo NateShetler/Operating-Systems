@@ -1,0 +1,6 @@
+This is a quick user manuel for the shell.\n
+    List of commands:\n
+    
+    C filename1 filename2\n
+        - The 'C' command will copy the contents of
+        filename1 to filename2 without deleting filename1\n
