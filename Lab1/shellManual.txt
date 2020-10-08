@@ -1,6 +1,40 @@
-This is a quick user manuel for the shell.\n
-    List of commands:\n
+This is a quick user manuel for the shell.
+    List of commands:
     
-    C filename1 filename2\n
+    cd 
+        - The "cd" command allows the user to traverse through files.
+        (For example, if one wanted to go to a directory named "myDirectory", 
+        one would type "cd myDirectory". To go back a directory, simply type
+        "cd ..".)
+
+    C file1 file2
         - The 'C' command will copy the contents of
-        filename1 to filename2 without deleting filename1\n
+        file1 to file2 without deleting file1.
+
+    D file
+        - The 'D' command will delete the named file.
+
+    E comment
+        - The 'E' command will display the comment on the screen.
+    
+    H 
+        - The 'H' command will show this manual.
+    
+    L
+        - The 'L' command will list the contents of the current directory
+        in long form.
+    
+    M file
+        - The 'M' command will create a named text file by launching a text editor.
+
+    P file
+        - The 'P' command will display the contents of the named file on the screen.
+
+    Q
+        - The 'Q' command will quit the shell.
+    
+    W
+        - The 'W' command will clear the screen.
+
+    X program
+        - The 'X' command will execute the named program (executable file).

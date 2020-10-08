@@ -63,11 +63,11 @@ void printPrompt();
 void readCommand(char *);
 
 // My Function Prototypes
-void LCommand();
+void LCommand(struct command_t *);
 void handleCommand(struct command_t *);
 
 int main(int argc, char *argv[]) {
-    int pid;
+    int pid, foxPid, chPid;
     int status;
     char cmdLine[MAX_LINE_LEN];
     struct command_t command;
@@ -79,19 +79,8 @@ int main(int argc, char *argv[]) {
         parseCommand(cmdLine, &command);
         command.argv[command.argc] = NULL;
 
-	    /*
-	        TODO: if the command is one of the shortcuts you're testing for
-	        either execute it directly or build a new command structure to
-	        execute next
-	    */
-
-        //------------------------------------------------------------------
-        // The following statements will convert the commands to their linux
-        // counterpart or execute them in some other way, so that they work
-        // correctly with this shell.
-        //------------------------------------------------------------------
-
-        if (*(command.name) == 'Q') // Quit Program command
+        // Either quit the shell or handle the inputted command
+        if (*(command.name) == 'Q') // Quit shell command
         {
             break;
         }
@@ -101,61 +90,61 @@ int main(int argc, char *argv[]) {
             handleCommand(&command);
         }
         
-
         /* Create a child process to execute the command */
         if ((pid = fork()) == 0) {
+
+            // Store the pid, if command is firefox
+            if (command.name == "firefox")
+            {
+                foxPid = pid;
+            }
+
             /* Child executing command */
             execvp(command.name, command.argv);
 
-            // Execvp failed, give user proper message
-            if (command.name[1] == '/') // This is for the 'X' command
+            // If execvp failed, give error message, otherwise a new prompt will be issued (new prompt issued at beginning of loop)
+            if (strlen(command.name) > 0)
             {
-                // Executable or command are invalid 
-                printf("Please ensure that the executable file and command are valid.\n");
+                if (command.name[1] == '/') // This is for the 'X' command
+                {
+                    // Executable or command are invalid 
+                    printf("Please ensure that the executable file and command are valid.\n");
+                }
+                else
+                {
+                    // If the command isn't valid, let the user know
+                    printf("Command not found. Please only enter valid commands.\n");
+                    perror(command.name);
+                }
             }
-            else
-            {
-                // If the command isn't valid, let the user know
-                printf("Command not found. Please only enter valid commands.\n");
-            }
-            
-            // Exit the process if execvp failed.
-            perror(command.name);
+
+            // Return
             return -1;
         }
         else
         {
-            
-            // Don't wait for the 'S' command (firefox) to finish
-            if (*(command.name) != "firefox")
+            // Wait
+            wait(&status);
+
+            // This will handle firefox
+            if (foxPid > 0)
             {
-                /* Wait for the child to terminate */
-                wait(&status); /* EDIT THIS LINE */
+                chPid = waitpid(foxPid, &status, WNOHANG); 
+
+                // This will terminate firefox if one is already open
+                if (chPid == foxPid)
+                {
+                    printf("Detecting firefox termination.\n");
+                    kill(foxPid, SIGTERM);
+                    foxPid = 0;
+                }
             }
             
-            // Finish 'L' command by listing contents of directory in long form
+            // Finish 'L' command if necessary
             if (command.name == "pwd")
             {
-                // Skip another line
-                printf("\n");
-
-                // Change the command name to the 'ls' linux command
-                command.name = "ls";
-                command.argv[1] = "-l";
-
-                // Fork Again and exec commands
-                if((pid = fork()) == 0)
-                {
-                    execvp(command.name, command.argv);
-
-                    // If the command is somehow invalid, let the user know
-                    printf("Command not found. Please only enter valid commands.\n");
-                }
-                else
-                {
-                    wait(&status);
-                }
-            } 
+                LCommand(&command);
+            }
         }  
    }
 
@@ -219,9 +208,14 @@ void readCommand(char *buffer) {
 
 /* End printPrompt and readCommand */
 
+// Pre: This function will accept a 'command' object
+// Post: This function will use the command name 
+// entered for this shell and then convert it to 
+// the correspoding linux command so that it can
+// be passed to execvp
 void handleCommand(struct command_t *command)
 {
-    if (strlen(command->name) == 1) // This will ensure that the command length is 1 before converting
+    if (strlen(command->name) == 1) // This will ensure that the command length is 1 before converting (Prevents commands like CP counting as 'C')
     {
         if (*(command->name) == 'C') // This is the copy file option
         {
@@ -238,7 +232,7 @@ void handleCommand(struct command_t *command)
             // This will convert the command name to a linux command name
             command->name = "echo";
         }
-        else if (*(command->name) == 'H')
+        else if (*(command->name) == 'H') // This is the help command that will print the manual
         {
             // This will set the command to read from an external file.
             command->name = "more";
@@ -246,12 +240,8 @@ void handleCommand(struct command_t *command)
         }
         else if (*(command->name) == 'L') // This will print out the current directory contents
         {
-            // THIS NEEDS WORK //
-            // Skip a line
-            printf("\n");
-            // This will convert the command name to a linux command name
-            command->name = "pwd";
-            // Note: The rest of the 'L' command is finished later (below)
+            // Run the LCommand function
+            LCommand(command);
         }
         else if (*(command->name) == 'M') // This will create the named text file and launch it in a text editor
         {
@@ -275,8 +265,6 @@ void handleCommand(struct command_t *command)
         }
         else if (*(command->name) == 'X') // This is the run program command
         {
-            // Need to concatenate char arrays (strings)
-
             // Will be string used to concatenate
             char xcommand[30] = "";
 
@@ -290,4 +278,51 @@ void handleCommand(struct command_t *command)
             command->name = xcommand;
         }
     }
+}
+
+// Pre: This function will accept a 'command' object
+// Post: This function will run the proper operations
+// for the 'L' command of the shell. It will set "pwd"
+// as the command name the first time it is called, so 
+// that the directory is printed out, and then the 
+// second time it is called, it will set the command to
+// be "ls -l" to list out the contents of the directory
+// in long form.
+void LCommand(struct command_t *command)
+{
+    // Variables to be used
+    int childPid;
+    int status2;
+
+    // Finish 'L' command by listing contents of directory in long form
+    // (Will run first block if function has already been called previously
+    // and command->name is set to "pwd")
+    if (command->name == "pwd")
+    {
+        // Skip another line
+        printf("\n");
+
+        // Change the command name to the 'ls' linux command
+        command->name = "ls";
+        command->argv[1] = "-l";
+
+        // Fork Again and exec commands
+        if((childPid = fork()) == 0)
+        {
+            execvp(command->name, command->argv);
+            // If the command is somehow invalid, let the user know
+            printf("Command not found. Please only enter valid commands.\n");
+        }
+        else
+        {
+            wait(&status2);
+        }
+    }
+    else // If this is the first time the function has been called
+    {
+        printf("\n");
+        // This will convert the command name to a linux command name
+        command->name = "pwd";
+    }
+    
 }
