@@ -93,12 +93,6 @@ int main(int argc, char *argv[]) {
         /* Create a child process to execute the command */
         if ((pid = fork()) == 0) {
 
-            // Store the pid, if command is firefox
-            if (command.name == "firefox")
-            {
-                foxPid = pid;
-            }
-
             /* Child executing command */
             execvp(command.name, command.argv);
 
@@ -123,7 +117,24 @@ int main(int argc, char *argv[]) {
             return -1;
         }
         else
-        {
+        { 
+
+
+            // Wiat for thread, unless it is a firefox thread
+            if (command.name != "firefox")
+            {
+                wait(&status);
+            }
+
+            /*
+
+            // This commented out block was not working correctly
+
+            if ((foxPid == 0) && command.name == "firefox")
+            {
+                foxPid = pid;
+            }
+
             // Wait
             wait(&status);
 
@@ -131,7 +142,7 @@ int main(int argc, char *argv[]) {
             if (foxPid > 0)
             {
                 chPid = waitpid(foxPid, &status, WNOHANG); 
-
+                
                 // This will terminate firefox if one is already open
                 if (chPid == foxPid)
                 {
@@ -140,7 +151,8 @@ int main(int argc, char *argv[]) {
                     foxPid = 0;
                 }
             }
-            
+            */
+
             // Finish 'L' command if necessary
             if (command.name == "pwd")
             {
@@ -213,7 +225,7 @@ void readCommand(char *buffer) {
 // Post: This function will use the command name 
 // entered for this shell and then convert it to 
 // the correspoding linux command so that it can
-// be passed to execvp
+// be passed to execvp.
 void handleCommand(struct command_t *command)
 {
     if (strlen(command->name) == 1) // This will ensure that the command length is 1 before converting (Prevents commands like CP counting as 'C')
