@@ -109,6 +109,7 @@ int main(int argc, char *argv[]) {
                 {
                     // Executable or command are invalid 
                     printf("Please ensure that the executable file and command are valid.\n");
+                    printf("Please only enter the name of the executable (Ex: executable, NOT ./executable)\n");
                 }
                 else
                 {
@@ -265,17 +266,25 @@ void handleCommand(struct command_t *command)
         }
         else if (*(command->name) == 'X') // This is the run program command
         {
-            // Will be string used to concatenate
-            char xcommand[30] = "";
+            if (command->argc > 1) // This will ensure that the user gives an executable
+            {
+                // Will be string used to concatenate
+                char xcommand[30] = "";
 
-            // Append './' to the xcommand
-            strcat(xcommand, "./");
+                // Append './' to the xcommand
+                strcat(xcommand, "./");
 
-            // Append the name of the executable
-            strcat(xcommand, command->argv[1]);
+                // Append the name of the executable
+                strcat(xcommand, command->argv[1]);
 
-            // Set command name to the xcommand
-            command->name = xcommand;
+                // Set command name to the xcommand
+                command->name = xcommand;
+            }
+            else // Otherwise, set the command name to a descriptive "non-command"
+            {
+                command->name = "noExecutableGiven";
+            }
+            
         }
     }
 }
