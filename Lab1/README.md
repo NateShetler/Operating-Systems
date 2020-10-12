@@ -1,7 +1,7 @@
 # Operating Systems Lab 1 - Nathaniel Shetler
 
 How to Compile:
-    This project contact a Makefile. To compile and make an executable, simply type "make". This will create an executable named "lab1"
+    This project contains a Makefile. To compile and make an executable, simply type "make". This will create an executable named "lab1"
 
 Additional Information:
     The file named "shellManual.txt" is used for the 'H' command in the function. It contains the manual for the shell.
