@@ -1,11 +1,5 @@
 This is a quick user manuel for the shell.
     List of commands:
-    
-    cd 
-        - The "cd" command allows the user to traverse through files.
-        (For example, if one wanted to go to a directory named "myDirectory", 
-        one would type "cd myDirectory". To go back a directory, simply type
-        "cd ..".)
 
     C file1 file2
         - The 'C' command will copy the contents of
@@ -35,7 +29,7 @@ This is a quick user manuel for the shell.
     
     S
         - The 'S' command will run a firefox browser without waiting for the command to finish.
-        
+
     W
         - The 'W' command will clear the screen.
 
