@@ -186,9 +186,16 @@ void *pusherMatches()
 // This is the agent who deals the tobacco and paper
 void *agent1()
 {
+    // Used for mixing up order
+    int sleepTime;
+
     // Have the agent deal 6 times before exiting
     for (int i = 0; i < 6; i++)
     {
+        // Generate random number up to 200 milliseconds
+        sleepTime = rand()% 200000;
+        usleep(sleepTime);
+
         while (sem_wait(&agentSem) != 0) {}
         sem_post(&tobacco);
         sem_post(&paper);
@@ -201,9 +208,16 @@ void *agent1()
 // This is the agent that deals tobacco and matches
 void *agent2()
 {
+    // Used for mixing up order
+    int sleepTime;
+
     // Have the agent deal 6 times before exiting
     for (int i = 0; i < 6; i++)
     {
+        // Generate random number up to 200 milliseconds
+        sleepTime = rand()% 200000;
+        usleep(sleepTime);
+
         while (sem_wait(&agentSem) != 0) {}
         sem_post(&tobacco);
         sem_post(&matches);
@@ -216,9 +230,16 @@ void *agent2()
 // This is the agent that deals matches and paper
 void *agent3()
 {
+    // Used for mixing up order
+    int sleepTime;
+
     // Have the agent deal 6 times before exiting
     for (int i = 0; i < 6; i++)
     {
+        // Generate random number up to 200 milliseconds
+        sleepTime = rand()% 200000;
+        usleep(sleepTime);
+
         while (sem_wait(&agentSem) != 0) {}
         sem_post(&matches);
         sem_post(&paper);
@@ -237,14 +258,14 @@ void *smokerTobacco()
     // The smoker will make 3 cigarettes and smoke them before exiting
     for (int i = 0; i < 3; i++)
     {
-        // Generate random number up to 200 milliseconds
-        sleepTime = rand()% 200000;
-
         while (sem_wait(&tobaccoSem) != 0) {}
 
         {
             // make cigarette
             printf("Smoker with tobacco making cigarette..\n");
+
+            // Generate random number up to 50 milliseconds
+            sleepTime = rand()% 50000;
             usleep(sleepTime);
         }
 
@@ -253,6 +274,9 @@ void *smokerTobacco()
         {
             // smoke the cigarette
             printf("Smoker with tobacco smoking cigarette..\n");
+
+            // Generate random number up to 50 milliseconds
+            sleepTime = rand()% 50000;
             usleep(sleepTime);
         }
     }
@@ -275,15 +299,14 @@ void *smokerPaper()
     // The smoker will make 3 cigarettes and smoke them before exiting
     for (int i = 0; i < 3; i++)
     {
-        // Generate random number up to 200 milliseconds
-        sleepTime = rand()% 200000;
-
-        // create random sleep time 
         while (sem_wait(&paperSem) != 0) {}
 
         {
             // make cigarette
             printf("Smoker with paper making cigarette..\n");
+
+            // Generate random number up to 50 milliseconds
+            sleepTime = rand()% 50000;
             usleep(sleepTime);
         }
 
@@ -292,6 +315,9 @@ void *smokerPaper()
         {
             // smoke the cigarette
             printf("Smoker with paper smoking cigarette..\n");
+
+            // Generate random number up to 50 milliseconds
+            sleepTime = rand()% 50000;
             usleep(sleepTime);
         }
     }
@@ -314,14 +340,14 @@ void *smokerMatches()
     // The smoker will make 3 cigarettes and smoke them before exiting
     for (int i = 0; i < 3; i++)
     {
-        // Generate random number up to 200 milliseconds
-        sleepTime = rand()% 200000;
-
         while (sem_wait(&matchSem) != 0) {}
 
         {
             // make cigarette
             printf("Smoker with matches making cigarette..\n");
+
+            // Generate random number up to 50 milliseconds
+            sleepTime = rand()% 50000;
             usleep(sleepTime);
         }
 
@@ -330,6 +356,9 @@ void *smokerMatches()
         {
             // smoke the cigarette
             printf("Smoker with matches smoking cigarette..\n");
+
+            // Generate random number up to 50 milliseconds
+            sleepTime = rand()% 50000;
             usleep(sleepTime);
         }
     }
