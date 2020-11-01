@@ -20,19 +20,19 @@ sem_t agentSem, tobacco, paper, matches;
 sem_t tobaccoSem, paperSem, matchSem, mutex;
 
 // Pusher thread prototypes
-void *pusherTobacco();
-void *pusherPaper();
-void *pusherMatches();
+void *pusherTobacco(); // Pusher function/thread for tobacco
+void *pusherPaper(); // Pusher function/thread for paper
+void *pusherMatches(); // Pusher function/thread for matches
 
 // Agent thread prototypess
-void *agent1();
-void *agent2();
-void *agent3();
+void *agent1(); // Function/thread of the agent who deals the tobacco and paper
+void *agent2(); // Function/thread of the agent that deals tobacco and matches
+void *agent3(); // Function/thread of the agent that deals matches and paper
 
 // Smoker Thread prototypes
-void *smokerTobacco();
-void *smokerPaper();
-void *smokerMatches();
+void *smokerTobacco(); // Function/thread of the smoker that has tobacco
+void *smokerPaper(); // Function/thread of the smoker that has paper
+void *smokerMatches(); // Function/thread of the smoker that has matches
 
 int main()
 {
@@ -98,23 +98,25 @@ void *pusherTobacco()
     // Run the tobacco pusher 12 times before exiting the thread
     for (int i = 0; i < 12; ++i)
     {
-        while (sem_wait(&tobacco) != 0) {}
-        while (sem_wait(&mutex) != 0) {}
-        if (isPaper == true)
+        while (sem_wait(&tobacco) != 0) {} // 'P' (wait) for tobacco semaphore
+        while (sem_wait(&mutex) != 0) {} // 'P' (wait) for mutex semaphore
+        if (isPaper == true) // If it is paper
         {
             isPaper = false;
-            sem_post(&matchSem);
+            sem_post(&matchSem); // 'V' for matchSem semaphore
         }
-        else if (isMatch == true)
+        else if (isMatch == true) // If it is match
         {
             isMatch = false;
-            sem_post(&paperSem);
+            sem_post(&paperSem); // 'V' for paperSem semaphore
         }
         else
         {
+            // Otherwise, set isTobacco to true
             isTobacco = true;
         }
 
+        // 'V' for mutex semaphore
         sem_post(&mutex);
     }
 
@@ -128,23 +130,25 @@ void *pusherPaper()
     // Run the paper pusher 12 times before exiting the thread
     for (int i = 0; i < 12; ++i)
     {
-        while (sem_wait(&paper) != 0) {}
-        while (sem_wait(&mutex) != 0) {}
-        if (isTobacco == true)
+        while (sem_wait(&paper) != 0) {} // 'P' (wait) for paper semaphore
+        while (sem_wait(&mutex) != 0) {} // 'P' (wait) for mutex semaphore
+        if (isTobacco == true) // If it is tobacco
         {
             isTobacco = false;
-            sem_post(&matchSem);
+            sem_post(&matchSem); // 'V' for matchSem semaphore
         }
-        else if (isMatch == true)
+        else if (isMatch == true) // If it is match
         {
             isMatch = false;
-            sem_post(&tobaccoSem);
+            sem_post(&tobaccoSem); // 'V' for tobaccoSem semaphore
         }
         else
         {
+            // Otherwise, set isPaper to true
             isPaper = true;
         }
         
+        // 'V' for mutex semaphore
         sem_post(&mutex);
     }
 
@@ -158,23 +162,25 @@ void *pusherMatches()
     // Run the matches pusher 12 times before exiting the thread
     for (int i = 0; i < 12; ++i)
     {
-        while (sem_wait(&matches) != 0) {}
-        while (sem_wait(&mutex) != 0) {}
-        if (isPaper == true)
+        while (sem_wait(&matches) != 0) {} // 'P' (wait) for matches semaphore
+        while (sem_wait(&mutex) != 0) {} // 'P' (wait) for mutex semaphore
+        if (isPaper == true) // If it is paper
         {
             isPaper = false;
-            sem_post(&tobaccoSem);
+            sem_post(&tobaccoSem); // 'V' for tobaccoSem semaphore
         }
-        else if (isTobacco == true)
+        else if (isTobacco == true) // If it is tobacco
         {
             isTobacco = false;
-            sem_post(&paperSem);
+            sem_post(&paperSem); // 'V' for paperSem semaphore
         }
         else
         {
+            // Otherwise, set isMatch to true
             isMatch = true;
         }
 
+        // 'V' for mutex semaphore
         sem_post(&mutex);
         
     }
@@ -196,9 +202,9 @@ void *agent1()
         sleepTime = rand()% 200000;
         usleep(sleepTime);
 
-        while (sem_wait(&agentSem) != 0) {}
-        sem_post(&tobacco);
-        sem_post(&paper);
+        while (sem_wait(&agentSem) != 0) {} // 'P' (wait) for agentSem semaphore
+        sem_post(&tobacco); // 'V' for tobacco semaphore
+        sem_post(&paper); // 'V' for tobacco semaphore
     }
 
     // Exit
@@ -218,9 +224,9 @@ void *agent2()
         sleepTime = rand()% 200000;
         usleep(sleepTime);
 
-        while (sem_wait(&agentSem) != 0) {}
-        sem_post(&tobacco);
-        sem_post(&matches);
+        while (sem_wait(&agentSem) != 0) {} // 'P' (wait) for agentSem semaphore
+        sem_post(&tobacco); // 'V' for tobacco semaphore
+        sem_post(&matches); // 'V' for matches semaphore
     } 
 
     // Exit
@@ -240,9 +246,9 @@ void *agent3()
         sleepTime = rand()% 200000;
         usleep(sleepTime);
 
-        while (sem_wait(&agentSem) != 0) {}
-        sem_post(&matches);
-        sem_post(&paper);
+        while (sem_wait(&agentSem) != 0) {} // 'P' (wait) for agentSem semaphore
+        sem_post(&matches); // 'V' for matches semaphore
+        sem_post(&paper); // 'V' for paper semaphore
     }
 
     // Exit
@@ -258,22 +264,22 @@ void *smokerTobacco()
     // The smoker will make 3 cigarettes and smoke them before exiting
     for (int i = 0; i < 3; i++)
     {
-        while (sem_wait(&tobaccoSem) != 0) {}
+        while (sem_wait(&tobaccoSem) != 0) {} // 'P' (wait) for tobaccoSem semaphore
 
         {
             // make cigarette
-            printf("Smoker with tobacco making cigarette..\n");
+            printf("Smoker with tobacco is making a cigarette..\n");
 
             // Generate random number up to 50 milliseconds
             sleepTime = rand()% 50000;
             usleep(sleepTime);
         }
 
-        sem_post(&agentSem);
+        sem_post(&agentSem); // 'V' agentSem semaphore
 
         {
             // smoke the cigarette
-            printf("Smoker with tobacco smoking cigarette..\n");
+            printf("Smoker with tobacco is smoking a cigarette..\n");
 
             // Generate random number up to 50 milliseconds
             sleepTime = rand()% 50000;
@@ -283,7 +289,7 @@ void *smokerTobacco()
     
     // Indicate that the smoker is leaving
     printf("\n");
-    printf("Smoking with tobacco is hungry and is leaving...\n");
+    printf("Smoker with tobacco is hungry and is leaving...\n");
     printf("\n");
 
     // Exit
@@ -299,22 +305,22 @@ void *smokerPaper()
     // The smoker will make 3 cigarettes and smoke them before exiting
     for (int i = 0; i < 3; i++)
     {
-        while (sem_wait(&paperSem) != 0) {}
+        while (sem_wait(&paperSem) != 0) {} // 'P' (wait) for paperSem semaphore
 
         {
             // make cigarette
-            printf("Smoker with paper making cigarette..\n");
+            printf("Smoker with paper is making a cigarette..\n");
 
             // Generate random number up to 50 milliseconds
             sleepTime = rand()% 50000;
             usleep(sleepTime);
         }
 
-        sem_post(&agentSem);
+        sem_post(&agentSem); // 'V' agentSem
 
         {
             // smoke the cigarette
-            printf("Smoker with paper smoking cigarette..\n");
+            printf("Smoker with paper is smoking a cigarette..\n");
 
             // Generate random number up to 50 milliseconds
             sleepTime = rand()% 50000;
@@ -340,22 +346,22 @@ void *smokerMatches()
     // The smoker will make 3 cigarettes and smoke them before exiting
     for (int i = 0; i < 3; i++)
     {
-        while (sem_wait(&matchSem) != 0) {}
+        while (sem_wait(&matchSem) != 0) {} // 'P' (wait) for matchSem semaphore
 
         {
             // make cigarette
-            printf("Smoker with matches making cigarette..\n");
+            printf("Smoker with matches is making a cigarette..\n");
 
             // Generate random number up to 50 milliseconds
             sleepTime = rand()% 50000;
             usleep(sleepTime);
         }
 
-        sem_post(&agentSem);
+        sem_post(&agentSem); // 'V' agentSem
 
         {
             // smoke the cigarette
-            printf("Smoker with matches smoking cigarette..\n");
+            printf("Smoker with matches is smoking a cigarette..\n");
 
             // Generate random number up to 50 milliseconds
             sleepTime = rand()% 50000;
