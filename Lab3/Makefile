@@ -1,7 +1,7 @@
 # This is the makefile for shetlerLab1.c
 
 all: filesys.c
-	gcc filesys.c -o lab3
+	gcc -o filesys filesys.c
 
 clean:
-	$(RM) lab3
+	$(RM) filesys
