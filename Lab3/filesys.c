@@ -26,6 +26,8 @@
 //Revised 11.3.2020 O'Neil
 
 #include <stdio.h>
+#include <stdbool.h>
+#include <string.h>
 
 int main(int argc, char* argv[])
 {
@@ -46,9 +48,13 @@ int main(int argc, char* argv[])
 			return 0;
 		}
 	}
-	else if (argc == 3) // Case for 'M', 'D', and 'P' commands
+	else if (argc == 3) // Make sure enters valid command
 	{
-
+		if (*argv[1] != 'P' && *argv[1] != 'D' && *argv[1] != 'M')
+		{
+			fprintf(stderr, "Please enter a valid command.Program quitting...\n");
+			return 0;
+		}
 	}
 	else if (argc > 3) // If the user enters too many arguments
 	{
@@ -60,7 +66,7 @@ int main(int argc, char* argv[])
 		fprintf(stderr, "Program quitting...\n");
 		return 0;
 
-	}
+	} 
 
 	//open the floppy image
 	FILE* floppy;
@@ -87,6 +93,14 @@ int main(int argc, char* argv[])
 	// Print the disk map unless the command is the 'L' command
 	if ((argc == 1) || (argc >= 2 && *argv[1] != 'L'))
 	{
+		// Char array for filename
+		char filename[strlen(argv[2])];
+
+		// To keep track if name is found on the disk
+		bool fileFound = false;
+
+		// Will tell if the file is a text file or not
+		bool isTextFile = false;
 
     	//print disk map
 		printf("Disk usage map:\n");
@@ -112,13 +126,97 @@ int main(int argc, char* argv[])
 		printf("\nDisk directory:\n");
 		printf("Name    Type Start Length\n");
     	for (i=0; i<512; i=i+16) {
+
 			if (dir[i]==0) break;
+
 			for (j=0; j<8; j++) {
-				if (dir[i+j]==0) printf(" "); else printf("%c",dir[i+j]);
+				if (dir[i+j]==0)
+				{
+					printf(" "); 
+				} 
+				else
+				{
+					printf("%c",dir[i+j]);
+
+					// Only write characters to filename variable if it is less than
+					// or equal to the length of the filename entered on the command line
+					if (j < strlen(argv[2])) 
+					{
+						filename[j] = dir[i+j];
+					}
+				} 
 			}
+
+			// If a filename was passed
+			if (argc == 3)
+			{
+				// Check to see if the filename passed exists on the disk
+				if (strcmp(filename, argv[2]) == 0)
+				{
+					fileFound = true;
+
+					if ((dir[i+8]=='t') || (dir[i+8]=='T'))
+					{
+						isTextFile = true;
+					}
+				}
+			}
+
 			if ((dir[i+8]=='t') || (dir[i+8]=='T')) printf("text"); else printf("exec");
 			printf(" %5d %6d bytes\n", dir[i+9], 512*dir[i+10]);
+
+			
 		}
+
+		// If the command is M, P, D
+		if (argc == 3)
+		{	
+			if (*argv[1] == 'P') // If the command is 'P'
+			{	
+				// If the file was not found, inform the user
+				if (fileFound == false)
+				{
+					fprintf(stderr, "Error, file not found. Program quitting...\n");
+				}
+				else
+				{
+				
+					if (isTextFile == false) // If the found is not a text file
+					{
+						fprintf(stderr, "The file was not a text file. Program quitting...\n");
+						return 0;
+					}
+					else
+					{
+						printf("The file was found on the disk.\n");
+						/*
+						//load the disk map from sector 256
+						char fileBuffer[512];
+						fseek(floppy,512*256,SEEK_SET);
+						for(i=0; i<512; i++)
+							fileBuffer[i]=fgetc(floppy);
+						*/
+					}
+				}
+			}
+			else if (*argv[1] == 'M')
+			{
+				if (fileFound == true) // If the filename already exists, quit the program
+				{
+					fprintf(stderr, "Duplicate or invalid name. Program quitting...\n");
+				}
+				else
+				{
+					
+					printf("Creating new file with filename: ");
+					printf("%s", argv[2]);
+					printf("\n");
+				}
+				
+			}
+			
+		}
+
 	}
 	else // For 'L' command
 	{
