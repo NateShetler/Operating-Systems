@@ -102,6 +102,12 @@ int main(int argc, char* argv[])
 		// Will tell if the file is a text file or not
 		bool isTextFile = false;
 
+		// To store sector number
+		int sectorNumber = 0;
+
+		// to store length
+		int fileLength = 0;
+
     	//print disk map
 		printf("Disk usage map:\n");
 		printf("      0 1 2 3 4 5 6 7 8 9 A B C D E F\n");
@@ -121,7 +127,11 @@ int main(int argc, char* argv[])
 			}
 			printf("\n");
 		}
-	
+
+		// To indicate that the file being searched for has already been found
+		// (To prevent sectorNumber from being set to the wrong value)
+		bool alreadyFound = false;
+
     	// print directory
 		printf("\nDisk directory:\n");
 		printf("Name    Type Start Length\n");
@@ -153,8 +163,10 @@ int main(int argc, char* argv[])
 				// Check to see if the filename passed exists on the disk
 				if (strcmp(filename, argv[2]) == 0)
 				{
+					// The file was found, set boolean to true
 					fileFound = true;
 
+					// Check to see if the file is a text file, if so, set boolean to true
 					if ((dir[i+8]=='t') || (dir[i+8]=='T'))
 					{
 						isTextFile = true;
@@ -165,6 +177,13 @@ int main(int argc, char* argv[])
 			if ((dir[i+8]=='t') || (dir[i+8]=='T')) printf("text"); else printf("exec");
 			printf(" %5d %6d bytes\n", dir[i+9], 512*dir[i+10]);
 
+			// Store the sectorNumber and length for use with P
+			if (fileFound == true && isTextFile == true && alreadyFound == false)
+			{
+				sectorNumber = dir[i+9];
+				fileLength = 512*dir[i+10];
+				alreadyFound = true;
+			}
 			
 		}
 
@@ -181,7 +200,7 @@ int main(int argc, char* argv[])
 				else
 				{
 				
-					if (isTextFile == false) // If the found is not a text file
+					if (isTextFile == false) // If the found is not a text file, inform user
 					{
 						fprintf(stderr, "The file was not a text file. Program quitting...\n");
 						return 0;
@@ -189,13 +208,25 @@ int main(int argc, char* argv[])
 					else
 					{
 						printf("The file was found on the disk.\n");
-						/*
-						//load the disk map from sector 256
-						char fileBuffer[512];
-						fseek(floppy,512*256,SEEK_SET);
+
+						//load the file from the correct sector
+						char fileBuffer[fileLength];
+						fseek(floppy,512*sectorNumber,SEEK_SET);
 						for(i=0; i<512; i++)
 							fileBuffer[i]=fgetc(floppy);
-						*/
+
+						// For formatting purposes
+						printf("\n");
+
+						// Print file one character at a time
+						for (i=0; i<fileLength; i=i+1) 
+						{
+							if (fileBuffer[i]==0) break;
+
+							// Print character
+							printf("%c",fileBuffer[i]);
+						}
+						
 					}
 				}
 			}
@@ -207,7 +238,7 @@ int main(int argc, char* argv[])
 				}
 				else
 				{
-					
+
 					printf("Creating new file with filename: ");
 					printf("%s", argv[2]);
 					printf("\n");
