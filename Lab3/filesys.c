@@ -105,8 +105,17 @@ int main(int argc, char* argv[])
 		// To store sector number
 		int sectorNumber = 0;
 
-		// to store length
+		// To store length
 		int fileLength = 0;
+
+		// To store the open space found in map
+		int openMapSpot;
+
+		// To indicate an open space found
+		bool openMapSpotFound = false;
+
+		// To store the empty directory entry
+		int emptyDirectoryEntry;
 
     	//print disk map
 		printf("Disk usage map:\n");
@@ -123,7 +132,22 @@ int main(int argc, char* argv[])
 				default: printf("0x%d_ ", i); break;
 			}
 			for (j=0; j<16; j++) {
-				if (map[16*i+j]==-1) printf(" X"); else printf(" .");
+				if (map[16*i+j]==-1)
+				{
+					printf(" X");
+				}  
+				else
+				{
+					printf(" .");
+
+					// Store first empty spot that comes up
+					if (openMapSpotFound == false)
+					{
+						openMapSpot = 16*i+j;
+						openMapSpotFound = true;
+					}
+
+				} 
 			}
 			printf("\n");
 		}
@@ -137,7 +161,14 @@ int main(int argc, char* argv[])
 		printf("Name    Type Start Length\n");
     	for (i=0; i<512; i=i+16) {
 
-			if (dir[i]==0) break;
+			if (dir[i]==0) 
+			{	
+				// Store the empty entry
+				emptyDirectoryEntry = i;
+				 
+				break;
+			}
+			
 
 			for (j=0; j<8; j++) {
 				if (dir[i+j]==0)
@@ -242,6 +273,55 @@ int main(int argc, char* argv[])
 					printf("Creating new file with filename: ");
 					printf("%s", argv[2]);
 					printf("\n");
+
+
+					// Write filename to directory
+					for (int i = 0; i < 9; ++i)
+					{	
+						if (i < strlen(argv[2]))
+						{
+							dir[emptyDirectoryEntry + i] = argv[2][i];
+						}
+						else if (i == 8)
+						{
+							dir[emptyDirectoryEntry + i] = 't';
+						}
+						else
+						{
+							dir[emptyDirectoryEntry + i] = '0';
+						}		 
+					}
+
+					// Write sector start and length
+					dir[emptyDirectoryEntry + 9] = openMapSpot;
+					dir[emptyDirectoryEntry + 10] = 1;
+
+					// print directory
+					printf("\nDisk directory:\n");
+					printf("Name    Type Start Length\n");
+    				for (i=0; i<512; i=i+16) {
+
+						if (dir[i]==0) 
+						{	 
+							break;
+						}
+			
+
+						for (j=0; j<8; j++) {
+							if (dir[i+j]==0)
+							{
+								printf(" "); 
+							} 
+							else
+							{
+								printf("%c",dir[i+j]);
+							} 
+						}
+
+						if ((dir[i+8]=='t') || (dir[i+8]=='T')) printf("text"); else printf("exec");
+						printf(" %5d %6d bytes\n", dir[i+9], 512*dir[i+10]);
+
+					}
 				}
 				
 			}
