@@ -267,6 +267,10 @@ int main(int argc, char* argv[])
 				{
 					fprintf(stderr, "Duplicate or invalid name. Program quitting...\n");
 				}
+				else if(openMapSpotFound == false)
+				{
+					fprintf(stderr, "Insufficient disk space. Program quitting...\n");
+				}
 				else
 				{
 
@@ -322,6 +326,27 @@ int main(int argc, char* argv[])
 						printf(" %5d %6d bytes\n", dir[i+9], 512*dir[i+10]);
 
 					}
+
+					// Set map entry to 255
+					map[openMapSpot] = 255;
+
+
+					printf("\nPlease enter what you would like to put in the text file: \n");
+
+					// This will store the user input for the file
+					char userFile[512];
+
+					// Get user input for the file
+					fgets(userFile, 512, stdin);
+
+					printf("%s", userFile);
+					printf("\n");
+
+					// Write file to empty sector
+					fseek(floppy,512*openMapSpot,SEEK_SET);
+					for(i=0; i<strlen(userFile); i++)
+						fputc(userFile[i], floppy);
+
 				}
 				
 			}
@@ -382,13 +407,13 @@ int main(int argc, char* argv[])
 	}
 
 
-/*
+
 	//write the map and directory back to the floppy image
     fseek(floppy,512*256,SEEK_SET);
     for (i=0; i<512; i++) fputc(map[i],floppy);
 
     fseek(floppy,512*257,SEEK_SET);
     for (i=0; i<512; i++) fputc(dir[i],floppy);
-*/
+
 	fclose(floppy);
 }
