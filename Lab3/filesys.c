@@ -156,6 +156,9 @@ int main(int argc, char* argv[])
 		// (To prevent sectorNumber from being set to the wrong value)
 		bool alreadyFound = false;
 
+		// To store the directory entry of the searched file if necessary
+		int foundDirectoryEntry;
+
     	// print directory
 		printf("\nDisk directory:\n");
 		printf("Name    Type Start Length\n");
@@ -197,6 +200,9 @@ int main(int argc, char* argv[])
 					// The file was found, set boolean to true
 					fileFound = true;
 
+					// Set the directory entry variable
+					foundDirectoryEntry = i;
+
 					// Check to see if the file is a text file, if so, set boolean to true
 					if ((dir[i+8]=='t') || (dir[i+8]=='T'))
 					{
@@ -208,8 +214,8 @@ int main(int argc, char* argv[])
 			if ((dir[i+8]=='t') || (dir[i+8]=='T')) printf("text"); else printf("exec");
 			printf(" %5d %6d bytes\n", dir[i+9], 512*dir[i+10]);
 
-			// Store the sectorNumber and length for use with P
-			if (fileFound == true && isTextFile == true && alreadyFound == false)
+			// Store the sectorNumber and length for use with P & D
+			if (fileFound == true &&  alreadyFound == false)
 			{
 				sectorNumber = dir[i+9];
 				fileLength = 512*dir[i+10];
@@ -292,7 +298,7 @@ int main(int argc, char* argv[])
 						}
 						else
 						{
-							dir[emptyDirectoryEntry + i] = '0';
+							dir[emptyDirectoryEntry + i] = '\0';
 						}		 
 					}
 
@@ -339,9 +345,6 @@ int main(int argc, char* argv[])
 					// Get user input for the file
 					fgets(userFile, 512, stdin);
 
-					printf("%s", userFile);
-					printf("\n");
-
 					// Write file to empty sector
 					fseek(floppy,512*openMapSpot,SEEK_SET);
 					for(i=0; i<strlen(userFile); i++)
@@ -349,6 +352,29 @@ int main(int argc, char* argv[])
 
 				}
 				
+			}
+			else if (*argv[1] == 'D')
+			{
+				if (fileFound == false)
+				{
+					// The file was not found, inform the user
+					fprintf(stderr, "The file was not found. Program quitting...\n");
+				}
+				else
+				{
+					// Set first byte of the filename to zero
+					dir[foundDirectoryEntry] = 0;
+
+					// Set map bytes to zero
+					for (int i = 0; i < dir[foundDirectoryEntry + 10]; ++i)
+					{
+						map[sectorNumber + i] = 0;
+					}
+
+					printf("The file was deleted.\n");
+
+				}
+
 			}
 			
 		}
