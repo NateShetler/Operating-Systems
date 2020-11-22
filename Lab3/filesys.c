@@ -19,7 +19,7 @@
 //
 //
 //
-// Signed:_____________________________________ Date:_____________
+// Signed:______Nathaniel Shetler________________ Date:____21 November 2020_________
 
 //filesys.c
 //Based on a program by Michael Black, 2007
@@ -28,6 +28,11 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+
+// Function Prototypes
+void pCommand(FILE* floppy, int sectorNumber, int fileLength);
+void mCommand(FILE* floppy, int emptyDirectoryEntry, int openMapSpot, char fileName[], char dir[512], char map[512]);
+void dCommand(char map[512], char dir[512], int foundDirectoryEntry, int sectorNumber);
 
 int main(int argc, char* argv[])
 {
@@ -52,7 +57,7 @@ int main(int argc, char* argv[])
 	{
 		if (*argv[1] != 'P' && *argv[1] != 'D' && *argv[1] != 'M')
 		{
-			fprintf(stderr, "Please enter a valid command.Program quitting...\n");
+			fprintf(stderr, "Please enter a valid command. Program quitting...\n");
 			return 0;
 		}
 	}
@@ -234,37 +239,16 @@ int main(int argc, char* argv[])
 				{
 					fprintf(stderr, "Error, file not found. Program quitting...\n");
 				}
+				else if (isTextFile == false) // If the found is not a text file, inform user
+				{
+					fprintf(stderr, "The file was not a text file. Program quitting...\n");
+					return 0;
+				}
 				else
 				{
-				
-					if (isTextFile == false) // If the found is not a text file, inform user
-					{
-						fprintf(stderr, "The file was not a text file. Program quitting...\n");
-						return 0;
-					}
-					else
-					{
-						printf("The file was found on the disk.\n");
-
-						//load the file from the correct sector
-						char fileBuffer[fileLength];
-						fseek(floppy,512*sectorNumber,SEEK_SET);
-						for(i=0; i<512; i++)
-							fileBuffer[i]=fgetc(floppy);
-
-						// For formatting purposes
-						printf("\n");
-
-						// Print file one character at a time
-						for (i=0; i<fileLength; i=i+1) 
-						{
-							if (fileBuffer[i]==0) break;
-
-							// Print character
-							printf("%c",fileBuffer[i]);
-						}
+					// Run the 'P' command
+					pCommand(floppy, sectorNumber,fileLength);
 						
-					}
 				}
 			}
 			else if (*argv[1] == 'M')
@@ -279,76 +263,8 @@ int main(int argc, char* argv[])
 				}
 				else
 				{
-
-					printf("Creating new file with filename: ");
-					printf("%s", argv[2]);
-					printf("\n");
-
-
-					// Write filename to directory
-					for (int i = 0; i < 9; ++i)
-					{	
-						if (i < strlen(argv[2]))
-						{
-							dir[emptyDirectoryEntry + i] = argv[2][i];
-						}
-						else if (i == 8)
-						{
-							dir[emptyDirectoryEntry + i] = 't';
-						}
-						else
-						{
-							dir[emptyDirectoryEntry + i] = '\0';
-						}		 
-					}
-
-					// Write sector start and length
-					dir[emptyDirectoryEntry + 9] = openMapSpot;
-					dir[emptyDirectoryEntry + 10] = 1;
-
-					// print directory
-					printf("\nDisk directory:\n");
-					printf("Name    Type Start Length\n");
-    				for (i=0; i<512; i=i+16) {
-
-						if (dir[i]==0) 
-						{	 
-							break;
-						}
-			
-
-						for (j=0; j<8; j++) {
-							if (dir[i+j]==0)
-							{
-								printf(" "); 
-							} 
-							else
-							{
-								printf("%c",dir[i+j]);
-							} 
-						}
-
-						if ((dir[i+8]=='t') || (dir[i+8]=='T')) printf("text"); else printf("exec");
-						printf(" %5d %6d bytes\n", dir[i+9], 512*dir[i+10]);
-
-					}
-
-					// Set map entry to 255
-					map[openMapSpot] = 255;
-
-
-					printf("\nPlease enter what you would like to put in the text file: \n");
-
-					// This will store the user input for the file
-					char userFile[512];
-
-					// Get user input for the file
-					fgets(userFile, 512, stdin);
-
-					// Write file to empty sector
-					fseek(floppy,512*openMapSpot,SEEK_SET);
-					for(i=0; i<strlen(userFile); i++)
-						fputc(userFile[i], floppy);
+					// Run the 'M' command
+					mCommand(floppy, emptyDirectoryEntry, openMapSpot, argv[2], dir, map);
 
 				}
 				
@@ -361,18 +277,9 @@ int main(int argc, char* argv[])
 					fprintf(stderr, "The file was not found. Program quitting...\n");
 				}
 				else
-				{
-					// Set first byte of the filename to zero
-					dir[foundDirectoryEntry] = 0;
-
-					// Set map bytes to zero
-					for (int i = 0; i < dir[foundDirectoryEntry + 10]; ++i)
-					{
-						map[sectorNumber + i] = 0;
-					}
-
-					printf("The file was deleted.\n");
-
+				{	
+					// Run the 'D' command
+					dCommand(map, dir, foundDirectoryEntry, sectorNumber);
 				}
 
 			}
@@ -382,7 +289,7 @@ int main(int argc, char* argv[])
 	}
 	else // For 'L' command
 	{
-		// This keeps track of the lenght of the filename
+		// This keeps track of the length of the filename
 		int counter;
 
 		// Keeps track of the total amount of bytes taken up
@@ -442,4 +349,99 @@ int main(int argc, char* argv[])
     for (i=0; i<512; i++) fputc(dir[i],floppy);
 
 	fclose(floppy);
+}
+
+// Pre: This function will take in a file variable (for a floppy disk file), 
+// an integer representing the sector number, and an integer respresenting the fileLength
+// Post: This function will print out the contents of the desired file
+void pCommand(FILE* floppy, int sectorNumber, int fileLength)
+{
+	printf("The file was found on the disk.\n");
+
+	//load the file from the correct sector
+	char fileBuffer[fileLength];
+	fseek(floppy,512*sectorNumber,SEEK_SET);
+	for(int i=0; i<512; i++)
+		fileBuffer[i]=fgetc(floppy);
+
+	// For formatting purposes
+	printf("\n");
+
+	// Print file one character at a time
+	for (int i=0; i<fileLength; i=i+1) 
+	{
+		if (fileBuffer[i]==0) break;
+
+		// Print character
+		printf("%c",fileBuffer[i]);
+	}
+}
+
+// Pre: This function will take in a file variable (for a floppy disk file), 
+// an integer representing the empty directory entry, and an integer representing
+// the open map spot, a char array for the filename, and then a char array for the directory and map
+// Post: This function will create a file and store it on the disk
+void mCommand(FILE* floppy, int emptyDirectoryEntry, int openMapSpot, char fileName[], char dir[512], char map[512])
+{
+	printf("Creating new file with filename (any name with over 8 characters will be cut off at 8 when the file is stored): ");
+	printf("%s", fileName);
+	printf("\n");
+
+
+	// Write filename to directory
+	for (int i = 0; i < 9; ++i)
+	{	
+		if (i < strlen(fileName))
+		{
+			dir[emptyDirectoryEntry + i] = fileName[i];
+		}
+		else if (i == 8)
+		{
+			dir[emptyDirectoryEntry + i] = 't';
+		}
+		else
+		{
+			dir[emptyDirectoryEntry + i] = '\0';
+		}		 
+	}
+
+	// Write sector start and length
+	dir[emptyDirectoryEntry + 9] = openMapSpot;
+	dir[emptyDirectoryEntry + 10] = 1;
+
+	// Set map entry to 255
+	map[openMapSpot] = 255;
+
+
+	printf("\nPlease enter what you would like to put in the text file: \n");
+
+	// This will store the user input for the file
+	char userFile[512];
+
+	// Get user input for the file
+	fgets(userFile, 512, stdin);
+
+	// Write file to empty sector
+	fseek(floppy,512*openMapSpot,SEEK_SET);
+	for(int i=0; i<strlen(userFile); i++)
+		fputc(userFile[i], floppy);
+
+	printf("The file has been created.\n");
+}
+
+// Pre: This function will take in two char arrays, one for the map and the other for the directory,
+// an integer for the foumd directory entry, and an integer for the sector number
+// Post: This function will delete the desire file
+void dCommand(char map[512], char dir[512], int foundDirectoryEntry, int sectorNumber)
+{
+	// Set first byte of the filename to zero
+	dir[foundDirectoryEntry] = 0;
+
+	// Set map bytes to zero
+	for (int i = 0; i < dir[foundDirectoryEntry + 10]; ++i)
+	{
+		map[sectorNumber + i] = 0;
+	}
+
+	printf("The file was deleted.\n");
 }
