@@ -60,6 +60,11 @@ int main(int argc, char* argv[])
 			fprintf(stderr, "Please enter a valid command. Program quitting...\n");
 			return 0;
 		}
+		else if (strlen(argv[2]) > 7)
+		{
+			fprintf(stderr, "Please ensure that the filename entered is less than or equal to 7 characters.\n");
+			return 0;
+		}
 	}
 	else if (argc > 3) // If the user enters too many arguments
 	{
